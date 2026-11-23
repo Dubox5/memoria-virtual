@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #define TAM_PAGINA 256
 #define NUM_PAGINAS 256
 #define NUM_FRAMES 128
+#define TAM_TLB 16
 #define TAM_LINHA 256
 
 int tabela_paginas[NUM_PAGINAS];
@@ -12,6 +14,11 @@ int pagina_do_frame[NUM_FRAMES];
 int uso_frame[NUM_FRAMES];
 int frames_usados = 0;
 int proximo_fifo_frame = 0;
+
+int tlb_pagina[TAM_TLB];
+int tlb_frame[TAM_TLB];
+int uso_tlb[TAM_TLB];
+int proximo_fifo_tlb = 0;
 
 int alg_pagina;
 int alg_tlb;
@@ -81,6 +88,58 @@ void le_enderecos(char *nome) {
     if (num_enderecos == 0) erro("arquivo de enderecos vazio", 0);
 }
 
+typedef struct {
+    int indice;
+    int pagina;
+    int achou;
+} BuscaTLB;
+
+void *busca_entrada(void *arg) {
+    BuscaTLB *b = (BuscaTLB *) arg;
+    if (tlb_pagina[b->indice] == b->pagina) b->achou = 1;
+    return NULL;
+}
+
+int busca_tlb(int pagina) {
+    pthread_t threads[TAM_TLB];
+    BuscaTLB busca[TAM_TLB];
+
+    for (int i = 0; i < TAM_TLB; i++) {
+        busca[i].indice = i;
+        busca[i].pagina = pagina;
+        busca[i].achou = 0;
+        if (pthread_create(&threads[i], NULL, busca_entrada, &busca[i]) != 0)
+            erro("nao consegui criar thread para a busca na TLB", 0);
+    }
+    for (int i = 0; i < TAM_TLB; i++)
+        pthread_join(threads[i], NULL);
+
+    for (int i = 0; i < TAM_TLB; i++)
+        if (busca[i].achou) return i;
+    return -1;
+}
+
+int insere_tlb(int pagina, int frame) {
+    int idx;
+    if (alg_tlb == 0) {
+        idx = proximo_fifo_tlb;
+        proximo_fifo_tlb = (proximo_fifo_tlb + 1) % TAM_TLB;
+    } else {
+        idx = -1;
+        for (int i = 0; i < TAM_TLB; i++) {
+            if (tlb_pagina[i] == -1) { idx = i; break; }
+        }
+        if (idx == -1) {
+            idx = 0;
+            for (int i = 1; i < TAM_TLB; i++)
+                if (uso_tlb[i] < uso_tlb[idx]) idx = i;
+        }
+    }
+    tlb_pagina[idx] = pagina;
+    tlb_frame[idx] = frame;
+    return idx;
+}
+
 int escolhe_frame() {
     if (frames_usados < NUM_FRAMES) {
         frames_usados++;
@@ -99,6 +158,8 @@ int escolhe_frame() {
 
     int velha = pagina_do_frame[f];
     tabela_paginas[velha] = -1;
+    for (int i = 0; i < TAM_TLB; i++)
+        if (tlb_pagina[i] == velha) tlb_pagina[i] = -1;
 
     return f;
 }
@@ -131,6 +192,7 @@ int main(int argc, char *argv[]) {
         erro("BACKING_STORE.bin menor que 65536 bytes", 0);
 
     for (int i = 0; i < NUM_PAGINAS; i++) tabela_paginas[i] = -1;
+    for (int i = 0; i < TAM_TLB; i++) tlb_pagina[i] = -1;
 
     FILE *out = fopen("correct.txt", "w");
     if (out == NULL) erro("nao consegui criar o correct.txt", 0);
@@ -145,14 +207,21 @@ int main(int argc, char *argv[]) {
         int deslocamento = endereco & 0xFF;
         int frame;
 
-        int idx = -1;
-        frame = tabela_paginas[pagina];
-        if (frame == -1) {
-            faltas++;
-            frame = carrega_pagina(pagina);
+        int idx = busca_tlb(pagina);
+        if (idx != -1) {
+            acertos_tlb++;
+            frame = tlb_frame[idx];
+        } else {
+            frame = tabela_paginas[pagina];
+            if (frame == -1) {
+                faltas++;
+                frame = carrega_pagina(pagina);
+            }
+            idx = insere_tlb(pagina, frame);
         }
 
         uso_frame[frame] = tempo;
+        uso_tlb[idx] = tempo;
 
         int fisico = frame * TAM_PAGINA + deslocamento;
         int valor = memoria[frame][deslocamento];
