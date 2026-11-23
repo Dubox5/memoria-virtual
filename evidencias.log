@@ -1,0 +1,100 @@
+Script started on 2026-11-23 12:14:29-03:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="133" LINES="33"]
+[?2004h]0;dubox@DuPc: ~/vm/ebs2[01;32mdubox@DuPc[00m:[01;34m~/vm/ebs2[00m$ [7mdate; whoami; pwd[27m
+[7mmake clean[27m
+[7mmake[27m
+[7m./vm addresses.txt lru fifo[27m
+[7mhead -5 correct.txt[27m
+[7mtail -5 correct.txt[27m
+[7mdiff correct.txt ../correct_esperado.txt && echo "IDENTICO"[27m
+[7m./vm addresses.txt fifo fifo && tail -5 correct.txt[27m
+[7m./vm addresses.txt fifo lru && tail -5 correct.txt[27m
+[7m./vm addresses.txt lru lru && tail -5 correct.txt[27m
+[7m./vm[27m
+[7m./vm addresses.txt lru[27m
+[7m./vm addresses.txt lru fifo extra[27m
+[7m./vm addresses.txt LRU fifo[27m
+[7m./vm addresses.txt lru opt[27m
+[7m./vm nada.txt lru fifo[27m
+[7mprintf '100\nabc\n' > teste.txt; ./vm teste.txt lru fifo[27m
+[7mprintf '100\n-5\n' > teste.txt; ./vm teste.txt lru fifo[27m
+[7mprintf '100\n70000\n' > teste.txt; ./vm teste.txt lru fifo[27m
+[7mprintf '100\n\n200\n' > teste.txt; ./vm teste.txt lru fifo[27m
+[7m: > teste.txt; ./vm teste.txt lru fifo[27m
+[7mmv BACKING_STORE.bin b.bak; ./vm addresses.txt lru fifo; mv b.bak BACKING_STORE.bin[27m
+[7mrm -f teste.txt[27m
+[7mls[27m
+[7mdate[27m
+[7mexit[27m[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A[A]0;dubox@DuPc: ~/vm/ebs2[01;32mdubox@DuPc[00m:[01;34m~/vm/ebs2[00m$ date; whoami; pwd
+make clean
+make
+./vm addresses.txt lru fifo
+head -5 correct.txt
+tail -5 correct.txt
+diff correct.txt ../correct_esperado.txt && echo "IDENTICO"
+./vm addresses.txt fifo fifo && tail -5 correct.txt
+./vm addresses.txt fifo lru && tail -5 correct.txt
+./vm addresses.txt lru lru && tail -5 correct.txt
+./vm
+./vm addresses.txt lru
+./vm addresses.txt lru fifo extra
+./vm addresses.txt LRU fifo
+./vm addresses.txt lru opt
+./vm nada.txt lru fifo
+printf '100\nabc\n' > teste.txt; ./vm teste.txt lru fifo
+printf '100\n-5\n' > teste.txt; ./vm teste.txt lru fifo
+printf '100\n70000\n' > teste.txt; ./vm teste.txt lru fifo
+printf '100\n\n200\n' > teste.txt; ./vm teste.txt lru fifo
+: > teste.txt; ./vm teste.txt lru fifo
+mv BACKING_STORE.bin b.bak; ./vm addresses.txt lru fifo; mv b.bak BACKING_STORE.bin
+rm -f teste.txt
+ls
+date
+exit
+[?2004lMon Nov 23 12:14:51 -03 2026
+dubox
+/home/dubox/vm/ebs2
+rm -f vm *.o
+gcc -Wall -Wextra -std=c99 -pedantic -O2 -pthread -o vm vm.c
+Virtual address: 16916 TLB: 0 Physical address: 20 Value: 0
+Virtual address: 62493 TLB: 1 Physical address: 285 Value: 0
+Virtual address: 30198 TLB: 2 Physical address: 758 Value: 29
+Virtual address: 53683 TLB: 3 Physical address: 947 Value: 108
+Virtual address: 40185 TLB: 4 Physical address: 1273 Value: 0
+Number of Translated Addresses = 1000
+Page Faults = 539
+Page Fault Rate = 0.539
+TLB Hits = 54
+TLB Hit Rate = 0.054
+IDENTICO
+Number of Translated Addresses = 1000
+Page Faults = 538
+Page Fault Rate = 0.538
+TLB Hits = 54
+TLB Hit Rate = 0.054
+Number of Translated Addresses = 1000
+Page Faults = 538
+Page Fault Rate = 0.538
+TLB Hits = 55
+TLB Hit Rate = 0.055
+Number of Translated Addresses = 1000
+Page Faults = 539
+Page Fault Rate = 0.539
+TLB Hits = 55
+TLB Hit Rate = 0.055
+Erro: uso: ./vm <arquivo de enderecos> <fifo|lru> <fifo|lru>
+Erro: uso: ./vm <arquivo de enderecos> <fifo|lru> <fifo|lru>
+Erro: uso: ./vm <arquivo de enderecos> <fifo|lru> <fifo|lru>
+Erro: algoritmo 'LRU' invalido, use fifo ou lru
+Erro: algoritmo 'opt' invalido, use fifo ou lru
+Erro: nao consegui abrir o arquivo 'nada.txt'
+Erro: endereco invalido, tem que ser um numero de 0 a 65535 (linha 2)
+Erro: endereco invalido, tem que ser um numero de 0 a 65535 (linha 2)
+Erro: endereco invalido, tem que ser um numero de 0 a 65535 (linha 2)
+Erro: linha vazia no meio do arquivo de enderecos (linha 2)
+Erro: arquivo de enderecos vazio
+Erro: nao consegui abrir o BACKING_STORE.bin
+BACKING_STORE.bin  Makefile  README.md  addresses.txt  correct.txt  evidencias.log  [0m[01;32mtestes.sh[0m  [01;32mvm[0m  vm.c
+Mon Nov 23 12:14:54 -03 2026
+exit
+
+Script done on 2026-11-23 12:14:54-03:00 [COMMAND_EXIT_CODE="0"]
