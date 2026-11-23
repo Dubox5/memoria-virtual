@@ -3,15 +3,19 @@
 #include <string.h>
 #define TAM_PAGINA 256
 #define NUM_PAGINAS 256
-#define NUM_FRAMES 256
+#define NUM_FRAMES 128
 #define TAM_LINHA 256
 
 int tabela_paginas[NUM_PAGINAS];
 signed char memoria[NUM_FRAMES][TAM_PAGINA];
+int pagina_do_frame[NUM_FRAMES];
+int uso_frame[NUM_FRAMES];
 int frames_usados = 0;
+int proximo_fifo_frame = 0;
 
 int alg_pagina;
 int alg_tlb;
+int tempo = 0;
 int *enderecos = NULL;
 int num_enderecos = 0;
 
@@ -78,8 +82,25 @@ void le_enderecos(char *nome) {
 }
 
 int escolhe_frame() {
-    frames_usados++;
-    return frames_usados - 1;
+    if (frames_usados < NUM_FRAMES) {
+        frames_usados++;
+        return frames_usados - 1;
+    }
+
+    int f;
+    if (alg_pagina == 0) {
+        f = proximo_fifo_frame;
+        proximo_fifo_frame = (proximo_fifo_frame + 1) % NUM_FRAMES;
+    } else {
+        f = 0;
+        for (int i = 1; i < NUM_FRAMES; i++)
+            if (uso_frame[i] < uso_frame[f]) f = i;
+    }
+
+    int velha = pagina_do_frame[f];
+    tabela_paginas[velha] = -1;
+
+    return f;
 }
 
 int carrega_pagina(int pagina) {
@@ -90,6 +111,7 @@ int carrega_pagina(int pagina) {
         erro("nao consegui ler a pagina do BACKING_STORE.bin", 0);
 
     tabela_paginas[pagina] = f;
+    pagina_do_frame[f] = pagina;
     return f;
 }
 
@@ -117,6 +139,7 @@ int main(int argc, char *argv[]) {
     int acertos_tlb = 0;
 
     for (int k = 0; k < num_enderecos; k++) {
+        tempo++;
         int endereco = enderecos[k];
         int pagina = (endereco >> 8) & 0xFF;
         int deslocamento = endereco & 0xFF;
@@ -129,6 +152,7 @@ int main(int argc, char *argv[]) {
             frame = carrega_pagina(pagina);
         }
 
+        uso_frame[frame] = tempo;
 
         int fisico = frame * TAM_PAGINA + deslocamento;
         int valor = memoria[frame][deslocamento];
